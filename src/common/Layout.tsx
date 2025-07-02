@@ -7,7 +7,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Outlet } from 'react-router-dom';
-
+import Link from '@mui/material/Link'
 const theme = createTheme();
 
 export default function Layout(): React.JSX.Element {
@@ -27,16 +27,25 @@ export default function Layout(): React.JSX.Element {
       </main>
       {/* Footer */}
       <Box sx={{ bgcolor: 'background.paper', p: 6 }} component="footer">
-        <Typography variant="h6" align="center" gutterBottom>
-          Footer
-        </Typography>
+       <Typography variant="h6" align="center" gutterBottom>
+       <Link href="https://www.typescriptlang.org/docs/" target="_blank" rel="noopener" underline="hover">
+        Footer1
+       </Link>
+       <Link href="https://ja.react.dev/" target="_blank" rel="noopener" underline="hover">
+        Footer2
+       </Link>
+
+       <Link href="https://nextjs.org/docs" target="_blank" rel="noopener" underline="hover">
+        Footer3
+       </Link>
+       </Typography>
         <Typography
           variant="subtitle1"
           align="center"
           color="text.secondary"
           component="p"
         >
-          Something here to give the footer a purpose!
+          Copyright ©
         </Typography>
       </Box>
       {/* End footer */}

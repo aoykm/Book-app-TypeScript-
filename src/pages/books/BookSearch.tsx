@@ -1,15 +1,13 @@
 import { useRef, useState } from 'react';
 import {
   Box, Button, Container, Fab, TextField, Typography,
-   Card, CardMedia, CardContent, CardActions
+  Card, CardMedia, CardContent, CardActions
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import Grid from '@mui/material/GridLegacy';
 import { Book, SearchBook } from '../../types';
-
-
 
 interface Props {
   books: Book[];
@@ -19,12 +17,28 @@ interface Props {
 const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
   const keyword = useRef<HTMLInputElement>(null);
   const [searchResult, setSearchResult] = useState<SearchBook[]>([]);
+  const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
   const search = async (e: React.FormEvent) => {
     e.preventDefault();
     const searchText = keyword.current?.value;
-    if (!searchText) return;
+
+    if (!searchText) {
+      setError(true);
+      setErrorMessage('本のタイトルは必須項目です');
+      return;
+    }
+    const forbiddenPattern = /["'`;#\-\/\*=]/;
+  if (forbiddenPattern.test(searchText)) {
+    setError(true);
+    setErrorMessage('半角記号（"\';-/#*=）は入力できません。');
+    return;
+  }
+
+    setError(false);
+    setErrorMessage('');
 
     const baseUrl = 'https://www.googleapis.com/books/v1/volumes?';
     const params = { q: `intitle:${searchText}`, maxResults: '40' };
@@ -51,7 +65,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     const newId = books.length !== 0 ? books.slice(-1)[0].id + 1 : 1;
     const newBook: Book = {
       id: newId,
-      title: card.title, 
+      title: card.title,
       description: card.description,
       image: card.image,
       readDate: '',
@@ -60,6 +74,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     setBooks([...books, newBook]);
     navigate(`/edit/${newId}`);
   };
+  
 
   return (
     <>
@@ -81,11 +96,12 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
           <Typography component="h1" variant="h5">本を検索</Typography>
           <Box component="form" onSubmit={search} sx={{ mt: 1 }}>
             <TextField
-              required
               fullWidth
               label="本のタイトルを入力"
               name="search"
               inputRef={keyword}
+              error={error}
+              helperText={error ? errorMessage : ''}
             />
             <Button
               type="submit"
@@ -102,7 +118,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
       <Container component="section" maxWidth="lg">
         <Grid container spacing={4}>
           {searchResult.map((card, index) => (
-            <Grid item key ={index} xs={12} sm={6} md={4}>
+            <Grid item key={index} xs={12} sm={6} md={4}>
               <Card sx={{ height: '100%' }}>
                 <Grid container>
                   <Grid item sm={4}>
