@@ -110,7 +110,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
               variant="contained"
               sx={{ my: 2 }}
             >
-              検索する
+              CONTAINED
             </Button>
           </Box>
         </Box>
