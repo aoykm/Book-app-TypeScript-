@@ -21,26 +21,31 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
-  const search = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const searchText = keyword.current?.value;
+  const handleBlur = () => {
+  const searchText = keyword.current?.value;
 
-    if (!searchText) {
-      setError(true);
-      setErrorMessage('本のタイトルは必須項目です');
-      return;
-    }
-    
-    const forbiddenPattern = /["'`;#\-\/\*=]/;
+  if (!searchText) {
+    setError(true);
+    setErrorMessage('本のタイトルは必須項目です');
+    return;
+  }
+
+  const forbiddenPattern = /["'`;#\-\/\*=]/;
   if (forbiddenPattern.test(searchText)) {
     setError(true);
     setErrorMessage('半角記号（"\';-/#*=）は入力できません。');
     return;
   }
 
-    setError(false);
-    setErrorMessage('');
+  setError(false);
+  setErrorMessage('');
+};
 
+  const search = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const searchText = keyword.current?.value;
+
+    
     const baseUrl = 'https://www.googleapis.com/books/v1/volumes?';
     const params = { q: `intitle:${searchText}`, maxResults: '40' };
     const queryParams = new URLSearchParams(params);
@@ -57,6 +62,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
         image: img,
         description,
       };
+      
     }) || [];
 
     setSearchResult(newList);
@@ -104,6 +110,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
               inputRef={keyword}
               error={error}
               helperText={error ? errorMessage : ''}
+              onBlur={handleBlur}
             />
             <Button
               type="submit"
