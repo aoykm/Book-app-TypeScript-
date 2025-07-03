@@ -31,12 +31,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
       return;
     }
     
-    const forbiddenPattern = /["'`;#\-\/\*=]/;
-  if (forbiddenPattern.test(searchText)) {
-    setError(true);
-    setErrorMessage('半角記号（"\';-/#*=）は入力できません。');
-    return;
-  }
+   
 
     setError(false);
     setErrorMessage('');
