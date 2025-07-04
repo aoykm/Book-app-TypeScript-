@@ -28,14 +28,14 @@ export default function Layout(): React.JSX.Element {
       {/* Footer */}
       <Box sx={{ bgcolor: 'background.paper', p: 6 }} component="footer">
        <Typography variant="h6" align="center" gutterBottom>
-       <Link href="https://www.typescriptlang.org/docs/" target="_blank" rel="noopener" underline="hover" sx={{ mx: 2 }}>
+       <Link href="https://www.typescriptlang.org/docs/" target="_blank" rel="noopener" underline="hover" >
         Footer1
        </Link>
-       <Link href="https://ja.react.dev/" target="_blank" rel="noopener" underline="hover" sx={{ mx: 2 }}>
+       <Link href="https://ja.react.dev/" target="_blank" rel="noopener" underline="hover" >
         Footer2
        </Link>
 
-       <Link href="https://nextjs.org/docs" target="_blank" rel="noopener" underline="hover" sx={{ mx: 2 }}>
+       <Link href="https://nextjs.org/docs" target="_blank" rel="noopener" underline="hover" >
         Footer3
        </Link>
        </Typography>
