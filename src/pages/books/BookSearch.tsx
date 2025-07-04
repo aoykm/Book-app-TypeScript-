@@ -31,12 +31,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
       return;
     }
     
-    const forbiddenPattern = /["'`;#\-\/\*=]/;
-  if (forbiddenPattern.test(searchText)) {
-    setError(true);
-    setErrorMessage('半角記号（"\';-/#*=）は入力できません。');
-    return;
-  }
+   
 
     setError(false);
     setErrorMessage('');
@@ -98,7 +93,6 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
           <Box component="form" onSubmit={search} sx={{ mt: 1 }}>
             <TextField
               fullWidth
-              required
               label="本のタイトルを入力"
               name="search"
               inputRef={keyword}
@@ -111,7 +105,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
               variant="contained"
               sx={{ my: 2 }}
             >
-              CONTAINED
+              検索する
             </Button>
           </Box>
         </Box>
