@@ -21,9 +21,8 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
-  const search = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const searchText = keyword.current?.value;
+  const handleBlur = () => {
+  const searchText = keyword.current?.value;
 
     if (!searchText) {
       setError(true);
@@ -31,10 +30,20 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
       return;
     }
     
-   
+    const forbiddenPattern = /["'`;#\-\/\*=]/;
+  if (forbiddenPattern.test(searchText)) {
+    setError(true);
+    setErrorMessage('半角記号（"\';-/#*=）は入力できません。');
+    return;
+  }
 
     setError(false);
     setErrorMessage('');
+};
+
+  const search = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const searchText = keyword.current?.value;
 
     const baseUrl = 'https://www.googleapis.com/books/v1/volumes?';
     const params = { q: `intitle:${searchText}`, maxResults: '40' };
@@ -52,6 +61,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
         image: img,
         description,
       };
+
     }) || [];
 
     setSearchResult(newList);
@@ -93,11 +103,13 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
           <Box component="form" onSubmit={search} sx={{ mt: 1 }}>
             <TextField
               fullWidth
+              required
               label="本のタイトルを入力"
               name="search"
               inputRef={keyword}
               error={error}
               helperText={error ? errorMessage : ''}
+              onBlur={handleBlur}
             />
             <Button
               type="submit"
