@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import {
   Box, Button, Container, Fab, TextField, Typography,
-  Card, CardMedia, CardContent, CardActions
+  Card, CardMedia, CardContent, CardActions, Pagination
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -19,7 +19,15 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
   const [searchResult, setSearchResult] = useState<SearchBook[]>([]);
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
+
+  const itemsPerPage = 12;
+  const totalPages = Math.ceil(searchResult.length / itemsPerPage);
+  const displayedResults = searchResult.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const search = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +38,10 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
       setErrorMessage('本のタイトルは必須項目です');
       return;
     }
-    
-   
 
     setError(false);
     setErrorMessage('');
+    setCurrentPage(1); 
 
     const baseUrl = 'https://www.googleapis.com/books/v1/volumes?';
     const params = { q: `intitle:${searchText}`, maxResults: '40' };
@@ -70,7 +77,10 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     setBooks([...books, newBook]);
     navigate(`/edit/${newId}`);
   };
-  
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <>
@@ -113,7 +123,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
 
       <Container component="section" maxWidth="lg">
         <Grid container spacing={4}>
-          {searchResult.map((card, index) => (
+          {displayedResults.map((card, index) => (
             <Grid item key={index} xs={12} sm={6} md={4}>
               <Card sx={{ height: '100%' }}>
                 <Grid container>
@@ -144,6 +154,17 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
             </Grid>
           ))}
         </Grid>
+
+        {searchResult.length > itemsPerPage && (
+          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+            <Pagination
+              count={totalPages}
+              page={currentPage}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </Box>
+        )}
       </Container>
     </>
   );
