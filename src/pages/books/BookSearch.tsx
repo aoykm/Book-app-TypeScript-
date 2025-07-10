@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import {
   Box, Button, Container, Fab, TextField, Typography,
   Card, CardMedia, CardContent, CardActions, Pagination
@@ -61,7 +61,8 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     }) || [];
 
     setSearchResult(newList);
-    setTotalItems(data.totalItems || 0);
+
+    setTotalItems(Math.min(data.totalItems || 0, 100));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
