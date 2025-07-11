@@ -24,7 +24,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
   const navigate = useNavigate();
 
   const itemsPerPage = 12;
-  const maxItems = 120; // 🔹 最大表示件数を120に制限
+  const maxItems = 120; 
 
   const search = async (page: number = 1) => {
     const searchText = keyword.current?.value;
@@ -63,7 +63,6 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
 
     setSearchResult(newList);
 
-    // 🔹 totalItems は最大 120 件に制限
     setTotalItems(Math.min(data.totalItems || 0, maxItems));
   };
 
