@@ -64,27 +64,24 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     };
     const queryParams = new URLSearchParams(params);
 
-    try {
       const response = await fetch(baseUrl + queryParams);
-      const data = await response.json();
+    const data = await response.json();
 
-      const newList: SearchBook[] = data.items?.map((book: any) => {
-        const title = book.volumeInfo?.title || '';
-        const img = book.volumeInfo?.imageLinks?.thumbnail || '';
-        const description = book.volumeInfo?.description?.slice(0, 40) || '';
-        return {
-          title,
-          image: img,
-          description,
-        };
-      }) || [];
+    const newList: SearchBook[] = data.items?.map((book: any) => {
+      const title = book.volumeInfo?.title || '';
+      const img = book.volumeInfo?.imageLinks?.thumbnail || '';
+      const description = book.volumeInfo?.description?.slice(0, 40) || '';
+      return {
+        title,
+        image: img,
+        description,
+      };
 
-      setSearchResult(newList);
-      setTotalItems(Math.min(data.totalItems || 0, maxItems));
-    } catch (err) {
-      setError(true);
-      setErrorMessage('検索に失敗しました。ネットワークを確認してください。');
-    }
+    }) || [];
+
+    setSearchResult(newList);
+
+    setTotalItems(Math.min(data.totalItems || 0, maxItems));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
