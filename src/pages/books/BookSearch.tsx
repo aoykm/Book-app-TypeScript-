@@ -24,32 +24,36 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
   const navigate = useNavigate();
 
   const itemsPerPage = 12;
-  const maxItems = 120; 
+  const maxItems = 120;
 
-  const search = async (page: number = 1) => {
-  const handleBlur = () => {
-  const searchText = keyword.current?.value;
+  const validateInput = (): boolean => {
+    const searchText = keyword.current?.value ?? '';
+    const forbiddenPattern = /["'`;#\-\/\*=]/;
 
-    if (!searchText) {
+    if (!searchText.trim()) {
       setError(true);
       setErrorMessage('本のタイトルは必須項目です');
-      return;
+      return false;
     }
-    
-  const forbiddenPattern = /["'`;#\-\/\*=]/;
-  if (forbiddenPattern.test(searchText)) {
-    setError(true);
-    setErrorMessage('半角記号（"\';-/#*=）は入力できません。');
-    return;
-  }
+
+    if (forbiddenPattern.test(searchText)) {
+      setError(true);
+      setErrorMessage('半角記号（"\';-/#*=）は入力できません。');
+      return false;
+    }
 
     setError(false);
     setErrorMessage('');
-};
+    return true;
+  };
 
-  const search = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleBlur = () => {
+    validateInput();
+  };
+
+  const fetchBooks = async (page: number = 1) => {
     const searchText = keyword.current?.value;
+    if (!validateInput()) return;
 
     const startIndex = (page - 1) * itemsPerPage;
     const baseUrl = 'https://www.googleapis.com/books/v1/volumes?';
@@ -60,35 +64,38 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     };
     const queryParams = new URLSearchParams(params);
 
-    const response = await fetch(baseUrl + queryParams);
-    const data = await response.json();
+    try {
+      const response = await fetch(baseUrl + queryParams);
+      const data = await response.json();
 
-    const newList: SearchBook[] = data.items?.map((book: any) => {
-      const title = book.volumeInfo?.title || '';
-      const img = book.volumeInfo?.imageLinks?.thumbnail || '';
-      const description = book.volumeInfo?.description?.slice(0, 40) || '';
-      return {
-        title,
-        image: img,
-        description,
-      };
+      const newList: SearchBook[] = data.items?.map((book: any) => {
+        const title = book.volumeInfo?.title || '';
+        const img = book.volumeInfo?.imageLinks?.thumbnail || '';
+        const description = book.volumeInfo?.description?.slice(0, 40) || '';
+        return {
+          title,
+          image: img,
+          description,
+        };
+      }) || [];
 
-    }) || [];
-
-    setSearchResult(newList);
-
-    setTotalItems(Math.min(data.totalItems || 0, maxItems));
+      setSearchResult(newList);
+      setTotalItems(Math.min(data.totalItems || 0, maxItems));
+    } catch (err) {
+      setError(true);
+      setErrorMessage('検索に失敗しました。ネットワークを確認してください。');
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(1);
-    search(1);
+    fetchBooks(1);
   };
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     setCurrentPage(page);
-    search(page);
+    fetchBooks(page);
   };
 
   const addBook = (card: SearchBook) => {
@@ -116,14 +123,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
       </Container>
 
       <Container component="section" maxWidth="lg">
-        <Box
-          sx={{
-            mt: 2,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}
-        >
+        <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <Typography component="h1" variant="h5">本を検索</Typography>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
             <TextField
