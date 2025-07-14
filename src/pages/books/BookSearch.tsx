@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import {
   Box, Button, Container, Fab, TextField, Typography,
-  Card, CardMedia, CardContent, CardActions
+  Card, CardMedia, CardContent, CardActions, Pagination
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -19,8 +19,14 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
   const [searchResult, setSearchResult] = useState<SearchBook[]>([]);
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const navigate = useNavigate();
 
+  const itemsPerPage = 12;
+  const maxItems = 120; 
+
+  const search = async (page: number = 1) => {
   const handleBlur = () => {
   const searchText = keyword.current?.value;
 
@@ -45,8 +51,13 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     e.preventDefault();
     const searchText = keyword.current?.value;
 
+    const startIndex = (page - 1) * itemsPerPage;
     const baseUrl = 'https://www.googleapis.com/books/v1/volumes?';
-    const params = { q: `intitle:${searchText}`, maxResults: '40' };
+    const params = {
+      q: `intitle:${searchText}`,
+      startIndex: startIndex.toString(),
+      maxResults: itemsPerPage.toString(),
+    };
     const queryParams = new URLSearchParams(params);
 
     const response = await fetch(baseUrl + queryParams);
@@ -65,6 +76,19 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     }) || [];
 
     setSearchResult(newList);
+
+    setTotalItems(Math.min(data.totalItems || 0, maxItems));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    search(1);
+  };
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page);
+    search(page);
   };
 
   const addBook = (card: SearchBook) => {
@@ -80,7 +104,8 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     setBooks([...books, newBook]);
     navigate(`/edit/${newId}`);
   };
-  
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
     <>
@@ -100,7 +125,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
           }}
         >
           <Typography component="h1" variant="h5">本を検索</Typography>
-          <Box component="form" onSubmit={search} sx={{ mt: 1 }}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
             <TextField
               fullWidth
               required
@@ -156,6 +181,17 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
             </Grid>
           ))}
         </Grid>
+
+        {totalItems > itemsPerPage && (
+          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+            <Pagination
+              count={totalPages}
+              page={currentPage}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </Box>
+        )}
       </Container>
     </>
   );
