@@ -120,7 +120,14 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
       </Container>
 
       <Container component="section" maxWidth="lg">
-        <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+         <Box
+          sx={{
+            mt: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
           <Typography component="h1" variant="h5">本を検索</Typography>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
             <TextField
