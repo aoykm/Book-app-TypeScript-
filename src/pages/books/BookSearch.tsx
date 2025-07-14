@@ -27,16 +27,29 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
   const maxItems = 120; 
 
   const search = async (page: number = 1) => {
-    const searchText = keyword.current?.value;
+  const handleBlur = () => {
+  const searchText = keyword.current?.value;
 
     if (!searchText) {
       setError(true);
       setErrorMessage('本のタイトルは必須項目です');
       return;
     }
+    
+  const forbiddenPattern = /["'`;#\-\/\*=]/;
+  if (forbiddenPattern.test(searchText)) {
+    setError(true);
+    setErrorMessage('半角記号（"\';-/#*=）は入力できません。');
+    return;
+  }
 
     setError(false);
     setErrorMessage('');
+};
+
+  const search = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const searchText = keyword.current?.value;
 
     const startIndex = (page - 1) * itemsPerPage;
     const baseUrl = 'https://www.googleapis.com/books/v1/volumes?';
@@ -59,6 +72,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
         image: img,
         description,
       };
+
     }) || [];
 
     setSearchResult(newList);
@@ -114,11 +128,13 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
             <TextField
               fullWidth
+              required
               label="本のタイトルを入力"
               name="search"
               inputRef={keyword}
               error={error}
               helperText={error ? errorMessage : ''}
+              onBlur={handleBlur}
             />
             <Button
               type="submit"
