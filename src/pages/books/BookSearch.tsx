@@ -27,25 +27,26 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
   const maxItems = 120;
 
   const validateInput = (): boolean => {
-    const searchText = keyword.current?.value ?? '';
-    const forbiddenPattern = /["'`;#\-\/\*=]/;
+  const searchText = keyword.current?.value ?? '';
+  const forbiddenPattern = /["'`;#\-\/\*=]/;
 
-    if (!searchText.trim()) {
-      setError(true);
-      setErrorMessage('本のタイトルは必須項目です');
-      return false;
-    }
+  if (!searchText) {
+    setError(true);
+    setErrorMessage('本のタイトルは必須項目です');
+    return false;
+  }
 
-    if (forbiddenPattern.test(searchText)) {
-      setError(true);
-      setErrorMessage('半角記号（"\';-/#*=）は入力できません。');
-      return false;
-    }
+  if (forbiddenPattern.test(searchText)) {
+    setError(true);
+    setErrorMessage('半角記号（"\';-/#*=）は入力できません。');
+    return false;
+  }
 
-    setError(false);
-    setErrorMessage('');
-    return true;
-  };
+  setError(false);
+  setErrorMessage('');
+  return true;
+};
+
 
   const handleBlur = () => {
     validateInput();
@@ -58,7 +59,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     const startIndex = (page - 1) * itemsPerPage;
     const baseUrl = 'https://www.googleapis.com/books/v1/volumes?';
     const params = {
-      q: `intitle:${searchText}`,
+      q: `intitle:${searchText || ' '}`, 
       startIndex: startIndex.toString(),
       maxResults: itemsPerPage.toString(),
     };
