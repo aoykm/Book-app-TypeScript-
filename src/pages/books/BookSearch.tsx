@@ -24,43 +24,48 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
   const navigate = useNavigate();
 
   const itemsPerPage = 12;
-  const maxItems = 120; 
+  const maxItems = 120;
 
-  const search = async (page: number = 1) => {
-  const handleBlur = () => {
-  const searchText = keyword.current?.value;
-
-    if (!searchText) {
-      setError(true);
-      setErrorMessage('本のタイトルは必須項目です');
-      return;
-    }
-    
+  const validateInput = (): boolean => {
+  const searchText = keyword.current?.value ?? '';
   const forbiddenPattern = /["'`;#\-\/\*=]/;
+
+  if (!searchText) {
+    setError(true);
+    setErrorMessage('本のタイトルは必須項目です');
+    return false;
+  }
+
   if (forbiddenPattern.test(searchText)) {
     setError(true);
     setErrorMessage('半角記号（"\';-/#*=）は入力できません。');
-    return;
+    return false;
   }
 
-    setError(false);
-    setErrorMessage('');
+  setError(false);
+  setErrorMessage('');
+  return true;
 };
 
-  const search = async (e: React.FormEvent) => {
-    e.preventDefault();
+
+  const handleBlur = () => {
+    validateInput();
+  };
+
+  const fetchBooks = async (page: number = 1) => {
     const searchText = keyword.current?.value;
+    if (!validateInput()) return;
 
     const startIndex = (page - 1) * itemsPerPage;
     const baseUrl = 'https://www.googleapis.com/books/v1/volumes?';
     const params = {
-      q: `intitle:${searchText}`,
+      q: `intitle:${searchText || ' '}`, 
       startIndex: startIndex.toString(),
       maxResults: itemsPerPage.toString(),
     };
     const queryParams = new URLSearchParams(params);
 
-    const response = await fetch(baseUrl + queryParams);
+      const response = await fetch(baseUrl + queryParams);
     const data = await response.json();
 
     const newList: SearchBook[] = data.items?.map((book: any) => {
@@ -83,12 +88,12 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(1);
-    search(1);
+    fetchBooks(1);
   };
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     setCurrentPage(page);
-    search(page);
+    fetchBooks(page);
   };
 
   const addBook = (card: SearchBook) => {
@@ -116,7 +121,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
       </Container>
 
       <Container component="section" maxWidth="lg">
-        <Box
+         <Box
           sx={{
             mt: 2,
             display: 'flex',
