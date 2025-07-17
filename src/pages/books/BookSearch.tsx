@@ -146,6 +146,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
               fullWidth
               variant="contained"
               sx={{ my: 2 }}
+              disabled={error}
             >
               検索する
             </Button>
