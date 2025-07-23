@@ -4,19 +4,14 @@ import {
   Container,
   Card,
   CardContent,
-  CardActions,
-  Button,
   Fab,
 } from '@mui/material';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { ja } from 'date-fns/locale';
 import { format } from 'date-fns';
 import Grid from '@mui/material/GridLegacy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import AddIcon from '@mui/icons-material/Add';
 import { Book } from '../../types';
 
 interface BookDetailProps {
@@ -25,7 +20,7 @@ interface BookDetailProps {
 }
 
 interface VolumeInfo {
-  title: string;
+  title?: string;
   description?: string;
   publisher?: string;
   publishedDate?: string;
@@ -38,31 +33,39 @@ interface SaleInfo {
 }
 
 interface GoogleBook {
-  volumeInfo: VolumeInfo;
-  saleInfo: SaleInfo;
+  volumeInfo?: VolumeInfo;
+  saleInfo?: SaleInfo;
 }
 
 const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
   const params = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [bookInfo, setBookInfo] = useState<GoogleBook | null>(null);
+  const location = useLocation();
 
-  const id = Number(params.id); 
+  const [bookInfo, setBookInfo] = useState<GoogleBook | null>(null);
+  const id = Number(params.id);
   const book = books.find((b) => b.id === id);
 
-  const [value, setValue] = useState<Date | null>(() =>
+  const [value] = useState<Date | null>(
     book?.readDate ? new Date(book.readDate) : null
   );
-  const [memo, setMemo] = useState<string>(book?.memo || '');
+  const [memo] = useState<string>(book?.memo || '');
 
   useEffect(() => {
     const fetchBookInfo = async () => {
       try {
-        const response = await fetch(`https://www.googleapis.com/books/v1/volumes/${params.id}`);
+        const response = await fetch(
+          `https://www.googleapis.com/books/v1/volumes/${params.id}`
+        );
         const data = await response.json();
-        setBookInfo(data);
+        if (data.volumeInfo || data.saleInfo) {
+          setBookInfo(data);
+        } else {
+          setBookInfo(null);
+        }
       } catch (error) {
         console.error('書籍情報の取得に失敗しました', error);
+        setBookInfo(null);
       }
     };
 
@@ -76,34 +79,48 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
   }
 
   const updateBookInfo = (bookId: number) => {
-    const newList = books.map((b) => {
-      if (b.id === bookId) {
-        return {
-          ...b,
-          readDate: value ? format(value, 'yyyy/MM/dd') : '',
-          memo,
-        };
-      }
-      return b;
-    });
-
+    const newList = books.map((b) =>
+      b.id === bookId
+        ? {
+            ...b,
+            readDate: value ? format(value, 'yyyy/MM/dd') : '',
+            memo,
+          }
+        : b
+    );
     setBooks(newList);
     navigate('/');
   };
 
-  const title = bookInfo?.volumeInfo?.title || book?.title || 'タイトル不明';
+  const title =
+    bookInfo?.volumeInfo?.title ||
+    book?.title ||
+    'タイトル不明';
+
   const image =
     bookInfo?.volumeInfo?.imageLinks?.thumbnail?.replace(/^http:\/\//, 'https://') ||
     book?.image?.replace(/^http:\/\//, 'https://') ||
     '/no-image.png';
 
   const publisher = bookInfo?.volumeInfo?.publisher || '不明';
-  const publishedDate = bookInfo?.volumeInfo?.publishedDate || '不明';
-  const price = bookInfo?.saleInfo?.listPrice?.amount
-    ? `${bookInfo.saleInfo.listPrice.amount}円`
-    : '不明';
-  const description = bookInfo?.volumeInfo?.description || book?.description || '説明なし';
+  const rawDate = bookInfo?.volumeInfo?.publishedDate || '不明';
+  const publishedDate = rawDate !== '不明' ? rawDate.replace(/-/g, '/') : rawDate;
+
+  const rawAmount = bookInfo?.saleInfo?.listPrice?.amount;
+  const price = rawAmount ? `${rawAmount.toLocaleString('ja-JP')}円` : '不明';
+
+  const rawDescription =
+    bookInfo?.volumeInfo?.description || book?.description || '説明なし';
+  const description = rawDescription
+    .replace(/<br\s*\/?>/gi, '')
+    .replace(/<\/?[^>]+>/g, '');
+
   const buyLink = bookInfo?.saleInfo?.buyLink;
+
+  const backLink =
+    location.state?.fromSearch && typeof location.state.fromSearch === 'string'
+      ? `/search${location.state.fromSearch}`
+      : '/search';
 
   return (
     <>
@@ -111,7 +128,7 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
         size="medium"
         color="primary"
         component={Link}
-        to="/search"
+        to={backLink}
         sx={{
           position: 'fixed',
           top: 70,
@@ -125,7 +142,11 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
       <Container component="section" maxWidth="md" sx={{ mt: 6 }}>
         <Card sx={{ height: '100%' }}>
           <Grid container>
-            <Grid item sm={4}>
+            <Grid
+              item
+              sm={4}
+              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+            >
               <CardMedia
                 component="img"
                 image={image}
@@ -134,6 +155,14 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
                   e.currentTarget.src = '/no-image.png';
                 }}
               />
+              <Fab
+                size="small"
+                color="primary"
+                onClick={() => updateBookInfo(id)}
+                sx={{ mt: 2 }}
+              >
+                <AddIcon />
+              </Fab>
             </Grid>
             <Grid item sm={8}>
               <CardContent>
@@ -152,22 +181,34 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
                 <Typography variant="body2" sx={{ mb: 1 }}>
                   <strong>出版日：</strong> {publishedDate}
                 </Typography>
-                {buyLink && (
+                {buyLink ? (
                   <a
-                  href={buyLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    color: 'green',
-                   textDecoration: 'underline',
-                   fontWeight: 'bold',
-                   display: 'inline-block',
-                   marginTop: '16px'
-                  }}
+                    href={buyLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: 'blue',
+                      textDecoration: 'underline',
+                      fontWeight: 'bold',
+                      display: 'inline-block',
+                      marginTop: '16px',
+                    }}
                   >
-                 購入はこちら
-                 </a>
-
+                    購入はこちら
+                  </a>
+                ) : (
+                  <a
+                    style={{
+                      color: 'gray',
+                      textDecoration: 'none',
+                      pointerEvents: 'none',
+                      fontStyle: 'italic',
+                      display: 'inline-block',
+                      marginTop: '16px',
+                    }}
+                  >
+                    購入はこちら
+                  </a>
                 )}
               </CardContent>
             </Grid>

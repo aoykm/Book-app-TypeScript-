@@ -1,9 +1,14 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import {
   Box, Button, Container, Fab, TextField, Typography,
   Card, CardContent, Pagination
 } from '@mui/material';
-import { Link, useNavigate } from 'react-router-dom';
+import {
+  Link,
+  useNavigate,
+  useLocation,
+  useSearchParams,
+} from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import Grid from '@mui/material/GridLegacy';
@@ -22,9 +27,22 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const itemsPerPage = 12;
   const maxItems = 120;
+
+  const keywordParam = searchParams.get('q') ?? '';
+  const pageParam = Number(searchParams.get('page')) || 1;
+
+  useEffect(() => {
+    if (keywordParam) {
+      if (keyword.current) keyword.current.value = keywordParam;
+      setCurrentPage(pageParam);
+      fetchBooks(keywordParam, pageParam);
+    }
+  }, []);
 
   const validateInput = (): boolean => {
     const searchText = keyword.current?.value ?? '';
@@ -51,14 +69,11 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     validateInput();
   };
 
-  const fetchBooks = async (page: number = 1) => {
-    const searchText = keyword.current?.value;
-    if (!validateInput()) return;
-
+  const fetchBooks = async (searchText: string, page: number) => {
     const startIndex = (page - 1) * itemsPerPage;
     const baseUrl = 'https://www.googleapis.com/books/v1/volumes?';
     const params = {
-      q: `intitle:${searchText || ' '}`,
+      q: `intitle:${searchText}`,
       startIndex: startIndex.toString(),
       maxResults: itemsPerPage.toString(),
     };
@@ -67,13 +82,14 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     const response = await fetch(baseUrl + queryParams);
     const data = await response.json();
 
-    const newList: SearchBook[] = data.items?.map((book: any) => {
-      const id = book.id || '';
-      const title = book.volumeInfo?.title || '';
-      const img = book.volumeInfo?.imageLinks?.thumbnail || '';
-      const description = book.volumeInfo?.description?.slice(0, 40) || '';
-      return { id, title, image: img, description };
-    }) || [];
+    const newList: SearchBook[] =
+      data.items?.map((book: any) => {
+        const id = book.id || '';
+        const title = book.volumeInfo?.title || '';
+        const img = book.volumeInfo?.imageLinks?.thumbnail || '';
+        const description = book.volumeInfo?.description?.slice(0, 40) || '';
+        return { id, title, image: img, description };
+      }) || [];
 
     setSearchResult(newList);
     setTotalItems(Math.min(data.totalItems || 0, maxItems));
@@ -81,13 +97,19 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateInput()) return;
+
+    const searchText = keyword.current?.value ?? '';
     setCurrentPage(1);
-    fetchBooks(1);
+    navigate(`/search?q=${encodeURIComponent(searchText)}&page=1`);
+    fetchBooks(searchText, 1);
   };
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     setCurrentPage(page);
-    fetchBooks(page);
+    const searchText = keyword.current?.value ?? '';
+    navigate(`/search?q=${encodeURIComponent(searchText)}&page=${page}`);
+    fetchBooks(searchText, page);
   };
 
   const addBook = (card: SearchBook) => {
@@ -121,7 +143,9 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
 
       <Container component="section" maxWidth="lg">
         <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Typography component="h1" variant="h5">本を検索</Typography>
+          <Typography component="h1" variant="h5">
+            本を検索
+          </Typography>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
             <TextField
               fullWidth
@@ -151,6 +175,9 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
             <Grid item key={index} xs={12} sm={6} md={4}>
               <Box sx={{ position: 'relative' }}>
                 <Card
+                  component={Link}
+                  to={`/detail/${card.id}`}
+                  state={{ fromSearch: location.search }}
                   sx={{
                     height: '100%',
                     display: 'flex',
@@ -161,8 +188,6 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
                     textDecoration: 'none',
                     paddingBottom: '56px',
                   }}
-                  component={Link}
-                  to={`/detail/${card.id}`}
                 >
                   <Box
                     sx={{
