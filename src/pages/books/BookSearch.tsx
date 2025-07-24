@@ -42,7 +42,7 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
       setCurrentPage(pageParam);
       fetchBooks(keywordParam, pageParam);
     }
-  }, []);
+  }, [keywordParam, pageParam]);
 
   const validateInput = (): boolean => {
     const searchText = keyword.current?.value ?? '';
@@ -79,20 +79,24 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     };
     const queryParams = new URLSearchParams(params);
 
-    const response = await fetch(baseUrl + queryParams);
-    const data = await response.json();
+    try {
+      const response = await fetch(baseUrl + queryParams);
+      const data = await response.json();
 
-    const newList: SearchBook[] =
-      data.items?.map((book: any) => {
-        const id = book.id || '';
-        const title = book.volumeInfo?.title || '';
-        const img = book.volumeInfo?.imageLinks?.thumbnail || '';
-        const description = book.volumeInfo?.description?.slice(0, 40) || '';
-        return { id, title, image: img, description };
-      }) || [];
+      const newList: SearchBook[] =
+        data.items?.map((book: any) => {
+          const id = book.id || '';
+          const title = book.volumeInfo?.title || '';
+          const img = book.volumeInfo?.imageLinks?.thumbnail || '';
+          const description = book.volumeInfo?.description?.slice(0, 40) || '';
+          return { id, title, image: img, description };
+        }) || [];
 
-    setSearchResult(newList);
-    setTotalItems(Math.min(data.totalItems || 0, maxItems));
+      setSearchResult(newList);
+      setTotalItems(Math.min(data.totalItems || 0, maxItems));
+    } catch (error) {
+      console.error('検索APIの取得に失敗しました', error);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -101,15 +105,13 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
 
     const searchText = keyword.current?.value ?? '';
     setCurrentPage(1);
-    navigate(`/search?q=${encodeURIComponent(searchText)}&page=1`);
-    fetchBooks(searchText, 1);
+    navigate(`/search?q=${encodeURIComponent(searchText)}&page=1`, { replace: true });
   };
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     setCurrentPage(page);
     const searchText = keyword.current?.value ?? '';
-    navigate(`/search?q=${encodeURIComponent(searchText)}&page=${page}`);
-    fetchBooks(searchText, page);
+    navigate(`/search?q=${encodeURIComponent(searchText)}&page=${page}`, { replace: true });
   };
 
   const addBook = (card: SearchBook) => {

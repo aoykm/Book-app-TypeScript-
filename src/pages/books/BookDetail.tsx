@@ -1,4 +1,5 @@
 import {
+  Box,
   CardMedia,
   Typography,
   Container,
@@ -33,6 +34,7 @@ interface SaleInfo {
 }
 
 interface GoogleBook {
+  id?: string;
   volumeInfo?: VolumeInfo;
   saleInfo?: SaleInfo;
 }
@@ -45,33 +47,33 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
   const [bookInfo, setBookInfo] = useState<GoogleBook | null>(null);
   const id = Number(params.id);
   const book = books.find((b) => b.id === id);
-
-  const [value] = useState<Date | null>(
-    book?.readDate ? new Date(book.readDate) : null
-  );
+  const [value] = useState<Date | null>(book?.readDate ? new Date(book.readDate) : null);
   const [memo] = useState<string>(book?.memo || '');
 
   useEffect(() => {
+    let ignore = false;
+
     const fetchBookInfo = async () => {
       try {
         const response = await fetch(
           `https://www.googleapis.com/books/v1/volumes/${params.id}`
         );
         const data = await response.json();
-        if (data.volumeInfo || data.saleInfo) {
+        if (!ignore) {
           setBookInfo(data);
-        } else {
-          setBookInfo(null);
         }
       } catch (error) {
         console.error('書籍情報の取得に失敗しました', error);
-        setBookInfo(null);
       }
     };
 
     if (params.id) {
       fetchBookInfo();
     }
+
+    return () => {
+      ignore = true;
+    };
   }, [params.id]);
 
   if (!book && !bookInfo) {
@@ -92,29 +94,43 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
     navigate('/');
   };
 
-  const title =
-    bookInfo?.volumeInfo?.title ||
-    book?.title ||
-    'タイトル不明';
+  const addBook = () => {
+    if (!bookInfo || !bookInfo.volumeInfo) return;
 
+    const newId = books.length !== 0 ? books.slice(-1)[0].id + 1 : 1;
+
+    const newBook: Book = {
+      id: newId,
+      title: bookInfo.volumeInfo.title || 'タイトル不明',
+      description:
+        bookInfo.volumeInfo.description?.replace(/<br\s*\/?>/gi, '').replace(/<\/?[^>]+>/g, '') ||
+        '説明なし',
+      image:
+        bookInfo.volumeInfo.imageLinks?.thumbnail?.replace(/^http:\/\//, 'https://') ||
+        '/no-image.png',
+      readDate: '',
+      memo: '',
+    };
+
+    setBooks([...books, newBook]);
+    navigate(`/edit/${newId}`);
+  };
+
+  const title = bookInfo?.volumeInfo?.title || book?.title || 'タイトル不明';
   const image =
     bookInfo?.volumeInfo?.imageLinks?.thumbnail?.replace(/^http:\/\//, 'https://') ||
     book?.image?.replace(/^http:\/\//, 'https://') ||
     '/no-image.png';
-
   const publisher = bookInfo?.volumeInfo?.publisher || '不明';
   const rawDate = bookInfo?.volumeInfo?.publishedDate || '不明';
   const publishedDate = rawDate !== '不明' ? rawDate.replace(/-/g, '/') : rawDate;
-
   const rawAmount = bookInfo?.saleInfo?.listPrice?.amount;
   const price = rawAmount ? `${rawAmount.toLocaleString('ja-JP')}円` : '不明';
-
   const rawDescription =
     bookInfo?.volumeInfo?.description || book?.description || '説明なし';
   const description = rawDescription
     .replace(/<br\s*\/?>/gi, '')
     .replace(/<\/?[^>]+>/g, '');
-
   const buyLink = bookInfo?.saleInfo?.buyLink;
 
   const backLink =
@@ -142,11 +158,7 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
       <Container component="section" maxWidth="md" sx={{ mt: 6 }}>
         <Card sx={{ height: '100%' }}>
           <Grid container>
-            <Grid
-              item
-              sm={4}
-              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-            >
+            <Grid item sm={4} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <CardMedia
                 component="img"
                 image={image}
@@ -158,7 +170,9 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
               <Fab
                 size="small"
                 color="primary"
-                onClick={() => updateBookInfo(id)}
+                onClick={() => {
+                  book ? updateBookInfo(id) : addBook();
+                }}
                 sx={{ mt: 2 }}
               >
                 <AddIcon />
