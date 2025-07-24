@@ -101,10 +101,10 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
 
     const newBook: Book = {
       id: newId,
-      title: bookInfo.volumeInfo.title || 'タイトル不明',
+      title: bookInfo.volumeInfo.title || '不明',
       description:
         bookInfo.volumeInfo.description?.replace(/<br\s*\/?>/gi, '').replace(/<\/?[^>]+>/g, '') ||
-        '説明なし',
+        '不明',
       image:
         bookInfo.volumeInfo.imageLinks?.thumbnail?.replace(/^http:\/\//, 'https://') ||
         '/no-image.png',
@@ -127,7 +127,7 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
   const rawAmount = bookInfo?.saleInfo?.listPrice?.amount;
   const price = rawAmount ? `${rawAmount.toLocaleString('ja-JP')}円` : '不明';
   const rawDescription =
-    bookInfo?.volumeInfo?.description || book?.description || '説明なし';
+    bookInfo?.volumeInfo?.description || book?.description || '不明';
   const description = rawDescription
     .replace(/<br\s*\/?>/gi, '')
     .replace(/<\/?[^>]+>/g, '');
