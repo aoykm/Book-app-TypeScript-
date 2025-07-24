@@ -116,7 +116,7 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
     navigate(`/edit/${newId}`);
   };
 
-  const title = bookInfo?.volumeInfo?.title || book?.title || 'タイトル不明';
+  const title = bookInfo?.volumeInfo?.title || book?.title || '不明';
   const image =
     bookInfo?.volumeInfo?.imageLinks?.thumbnail?.replace(/^http:\/\//, 'https://') ||
     book?.image?.replace(/^http:\/\//, 'https://') ||
