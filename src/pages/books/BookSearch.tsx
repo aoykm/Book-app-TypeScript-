@@ -35,13 +35,19 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
 
   const keywordParam = searchParams.get('q') ?? '';
   const pageParam = Number(searchParams.get('page')) || 1;
+  const didFetch = useRef(false);
 
   useEffect(() => {
-    if (keywordParam) {
-      if (keyword.current) keyword.current.value = keywordParam;
-      setCurrentPage(pageParam);
-      fetchBooks(keywordParam, pageParam);
+    if (!keywordParam || didFetch.current) return;
+
+    didFetch.current = true;
+
+    if (keyword.current) {
+      keyword.current.value = keywordParam;
     }
+
+    setCurrentPage(pageParam);
+    fetchBooks(keywordParam, pageParam);
   }, [keywordParam, pageParam]);
 
   const validateInput = (): boolean => {
@@ -104,14 +110,16 @@ const BookSearch: React.FC<Props> = ({ books, setBooks }) => {
     if (!validateInput()) return;
 
     const searchText = keyword.current?.value ?? '';
+    didFetch.current = false;
     setCurrentPage(1);
-    navigate(`/search?q=${encodeURIComponent(searchText)}&page=1`, { replace: true });
+    navigate(`/search?q=${encodeURIComponent(searchText)}&page=1`);
   };
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     setCurrentPage(page);
     const searchText = keyword.current?.value ?? '';
-    navigate(`/search?q=${encodeURIComponent(searchText)}&page=${page}`, { replace: true });
+    didFetch.current = false; 
+    navigate(`/search?q=${encodeURIComponent(searchText)}&page=${page}`);
   };
 
   const addBook = (card: SearchBook) => {

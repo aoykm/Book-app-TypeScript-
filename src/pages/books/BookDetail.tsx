@@ -8,7 +8,7 @@ import {
   Fab,
 } from '@mui/material';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import Grid from '@mui/material/GridLegacy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -45,36 +45,46 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
   const location = useLocation();
 
   const [bookInfo, setBookInfo] = useState<GoogleBook | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const didFetch = useRef(false); 
   const id = Number(params.id);
   const book = books.find((b) => b.id === id);
   const [value] = useState<Date | null>(book?.readDate ? new Date(book.readDate) : null);
   const [memo] = useState<string>(book?.memo || '');
 
   useEffect(() => {
-    let ignore = false;
+    if (!params.id || didFetch.current) return;
+    didFetch.current = true;
 
     const fetchBookInfo = async () => {
       try {
+        setIsLoading(true);
+        console.log(`📘 Fetching book info for ID: ${params.id}`);
         const response = await fetch(
           `https://www.googleapis.com/books/v1/volumes/${params.id}`
         );
         const data = await response.json();
-        if (!ignore) {
-          setBookInfo(data);
-        }
+        setBookInfo(data);
       } catch (error) {
         console.error('書籍情報の取得に失敗しました', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (params.id) {
-      fetchBookInfo();
-    }
+    fetchBookInfo();
+  }, [params.id]); 
 
-    return () => {
-      ignore = true;
-    };
-  }, [params.id]);
+  if (isLoading) {
+    return (
+      <Container sx={{ mt: 6, textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary">
+          書籍情報を取得中です...
+        </Typography>
+      </Container>
+    );
+  }
 
   if (!book && !bookInfo) {
     return <Typography>本の詳細情報が取得できません</Typography>;
@@ -103,8 +113,9 @@ const BookDetail: React.FC<BookDetailProps> = ({ books, setBooks }) => {
       id: newId,
       title: bookInfo.volumeInfo.title || '不明',
       description:
-        bookInfo.volumeInfo.description?.replace(/<br\s*\/?>/gi, '').replace(/<\/?[^>]+>/g, '') ||
-        '不明',
+        bookInfo.volumeInfo.description
+          ?.replace(/<br\s*\/?>/gi, '')
+          .replace(/<\/?[^>]+>/g, '') || '不明',
       image:
         bookInfo.volumeInfo.imageLinks?.thumbnail?.replace(/^http:\/\//, 'https://') ||
         '/no-image.png',
