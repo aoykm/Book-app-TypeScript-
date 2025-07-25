@@ -20,20 +20,13 @@ const App: React.FC = () => {
   return (
     <>
       <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<BookIndex books={books} />} />
-          <Route
-            path="search"
-            element={<BookSearch books={books} setBooks={setBooks} />}
-          />
-          <Route path="edit" element={<BookEdit />}>
-            <Route
-              path=":id"
-              element={<BookDetail books={books} setBooks={setBooks} />}
-            />
-          </Route>
-          <Route path="mui-test" element={<MuiTest />} />
-        </Route>
+       <Route element={<Layout />}>
+       <Route index element={<BookIndex books={books} />} />
+       <Route path="search" element={<BookSearch books={books} setBooks={setBooks} />} />
+       <Route path="detail/:id" element={<BookDetail books={books} setBooks={setBooks} />} />
+       <Route path="edit/:id" element={<BookEdit />} />
+       <Route path="mui-test" element={<MuiTest />} />
+       </Route>
       </Routes>
     </>
   );

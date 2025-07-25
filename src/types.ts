@@ -8,6 +8,7 @@ export interface Book {
 }
 
 export interface SearchBook {
+  id: string;
   title: string;
   image: string;
   description: string;
